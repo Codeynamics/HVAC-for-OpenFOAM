@@ -44,6 +44,12 @@ mixture
         mu              1.8e-05;
         Pr              0.7;
     }
+
+    humidityTransport
+    {
+        molecularDiffusivity   [0 2 -1 0 0 0 0] 2.5e-05;
+        turbulentSchmidtNumber 0.7;
+    }
 }
 
 

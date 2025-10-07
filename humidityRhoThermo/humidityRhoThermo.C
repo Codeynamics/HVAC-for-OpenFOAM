@@ -195,8 +195,16 @@ Foam::humidityRhoThermo::humidityRhoThermo
         ),
         mesh,
         dimensionSet(1,-1,-1,0,0,0,0)
-    )
+    ),
+    molecularDiffusivity_
+    (
+        "molecularDiffusivity",
+        dimensionSet(0,2,-1,0,0,0,0),
+        scalar(2.5e-05)
+    ),
+    turbulentSchmidtNumber_(0.7)
 {
+    readHumidityTransport();
     method_ = readMethod();
 }
 
@@ -361,8 +369,16 @@ Foam::humidityRhoThermo::humidityRhoThermo
         ),
         mesh,
         dimensionSet(1,-1,-1,0,0,0,0)
-    )
+    ),
+    molecularDiffusivity_
+    (
+        "molecularDiffusivity",
+        dimensionSet(0,2,-1,0,0,0,0),
+        scalar(2.5e-05)
+    ),
+    turbulentSchmidtNumber_(0.7)
 {
+    readHumidityTransport();
     method_ = readMethod();
 }
 
@@ -526,9 +542,76 @@ Foam::humidityRhoThermo::humidityRhoThermo
         ),
         mesh,
         dimensionSet(1,-1,-1,0,0,0,0)
-    )
+    ),
+    molecularDiffusivity_
+    (
+        "molecularDiffusivity",
+        dimensionSet(0,2,-1,0,0,0,0),
+        scalar(2.5e-05)
+    ),
+    turbulentSchmidtNumber_(0.7)
 {
+    readHumidityTransport();
     method_ = readMethod();
+}
+
+
+void Foam::humidityRhoThermo::readHumidityTransport()
+{
+    const dimensionedScalar defaultMolecularDiffusivity
+    (
+        "molecularDiffusivity",
+        dimensionSet(0,2,-1,0,0,0,0),
+        scalar(2.5e-05)
+    );
+
+    molecularDiffusivity_ = defaultMolecularDiffusivity;
+    turbulentSchmidtNumber_ = 0.7;
+
+    if (this->found("humidityTransport"))
+    {
+        const dictionary humidityDict(this->subDict("humidityTransport"));
+
+        molecularDiffusivity_ =
+            humidityDict.lookupOrDefault<dimensionedScalar>
+            (
+                "molecularDiffusivity",
+                defaultMolecularDiffusivity
+            );
+
+        turbulentSchmidtNumber_ =
+            humidityDict.lookupOrDefault<scalar>
+            (
+                "turbulentSchmidtNumber",
+                turbulentSchmidtNumber_
+            );
+
+        return;
+    }
+
+    if (this->found("mixture"))
+    {
+        const dictionary mixtureDict(this->subDict("mixture"));
+
+        if (mixtureDict.found("humidityTransport"))
+        {
+            const dictionary humidityDict(mixtureDict.subDict("humidityTransport"));
+
+            molecularDiffusivity_ =
+                humidityDict.lookupOrDefault<dimensionedScalar>
+                (
+                    "molecularDiffusivity",
+                    defaultMolecularDiffusivity
+                );
+
+            turbulentSchmidtNumber_ =
+                humidityDict.lookupOrDefault<scalar>
+                (
+                    "turbulentSchmidtNumber",
+                    turbulentSchmidtNumber_
+                );
+        }
+    }
 }
 
 

@@ -12,3 +12,16 @@ humidityRhoThermo/derivedFvPatchFields/fixedHumidity/fixedHumidityFvPatchScalarF
 
 •	Compile the thermo library and boundary condition 
 wmake libso
+
+•	(Optional) Define humidity transport coefficients in
+    `constant/thermophysicalProperties`, e.g.
+
+```
+humidityTransport
+{
+    molecularDiffusivity   [0 2 -1 0 0 0 0] 2.5e-05;
+    turbulentSchmidtNumber 0.7;
+}
+```
+
+  If omitted, the solver falls back to the defaults shown above.

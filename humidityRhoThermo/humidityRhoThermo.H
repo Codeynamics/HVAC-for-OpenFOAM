@@ -96,6 +96,9 @@ protected:
 
     // Protected Member Functions
 
+        //- Read humidity transport coefficients from dictionaries
+        void readHumidityTransport();
+
         //- Construct as copy (not implemented)
         humidityRhoThermo(const humidityRhoThermo&);
 
@@ -103,6 +106,12 @@ protected:
     // Turbulence fields
 
         volScalarField muEff_;
+
+        //- Molecular diffusivity for water vapour transport [m^2/s]
+        dimensionedScalar molecularDiffusivity_;
+
+        //- Turbulent Schmidt number for humidity transport [-]
+        scalar turbulentSchmidtNumber_;
 
 
 public:

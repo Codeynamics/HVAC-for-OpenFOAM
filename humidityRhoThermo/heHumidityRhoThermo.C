@@ -420,9 +420,9 @@ void Foam::heHumidityRhoThermo<BasicPsiThermo, MixtureType>::
 specificHumidityTransport()
 {
     volScalarField& specHum = this->specificHumidity_;
-    volScalarField& muEff = this->muEff_;
+    volScalarField& gammaEff = this->muEff_;
 
-    const volScalarField& mu = this->mu_;
+    const dimensionedScalar& molecularDiffusivity = this->molecularDiffusivity_;
 
     //- Old density
     const volScalarField& rho =
@@ -437,16 +437,25 @@ specificHumidityTransport()
 
     const word turbulenceMode = word(turbProp.lookup("simulationType"));
 
+    gammaEff = rho*molecularDiffusivity;
+
     if (turbulenceMode == "RAS")
     {
         const volScalarField& nut =
             this->db().objectRegistry::lookupObject<volScalarField>("nut");
 
-        muEff = rho*nut + mu;
-    }
-    else
-    {
-        muEff = mu;
+        scalar turbulentSc = this->turbulentSchmidtNumber_;
+
+        if (turbulentSc <= SMALL)
+        {
+            WarningInFunction
+                << "turbulentSchmidtNumber is <= SMALL. Using default value 0.7"
+                << endl;
+
+            turbulentSc = 0.7;
+        }
+
+        gammaEff += rho*nut/turbulentSc;
     }
 
     fvScalarMatrix specHumEqn
@@ -454,7 +463,7 @@ specificHumidityTransport()
         fvm::ddt(rho, specHum)
       + fvm::div(phi, specHum)
      ==
-        fvm::laplacian(muEff, specHum)
+        fvm::laplacian(gammaEff, specHum)
     );
 
     specHumEqn.relax();
@@ -474,7 +483,27 @@ specificHumidityTransport()
 template<class BasicPsiThermo, class MixtureType>
 void Foam::heHumidityRhoThermo<BasicPsiThermo, MixtureType>::densityChange()
 {
-    this->rho_ += this->waterContent_;
+    const volScalarField& p = this->p_;
+    const volScalarField& T = this->T_;
+    const volScalarField& pPH2O = this->partialPressureH2O_;
+
+    const dimensionedScalar RSpecificDryAir
+    (
+        "gasConstantDryAir",
+        dimensionSet(0,2,-2,-1,0,0,0),
+        scalar(287.058)
+    );
+
+    const dimensionedScalar minPressure
+    (
+        "minPartialPressure",
+        dimPressure,
+        SMALL
+    );
+
+    volScalarField rhoDryAir = max(p - pPH2O, minPressure)/(RSpecificDryAir*T);
+
+    this->rho_ = rhoDryAir + this->waterContent_;
 }
 
 
